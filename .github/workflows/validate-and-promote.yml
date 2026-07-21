@@ -1,0 +1,30 @@
+name: Validate and promote pending comments
+
+on:
+  push:
+    paths:
+      - 'pending/**'
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate and promote pending comments
+        env:
+          BOB_TOKEN: ${{ secrets.BOB_TOKEN }}
+        run: node scripts/promote.js
+
+      - name: Remove processed pending files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A pending/
+          if ! git diff --cached --quiet; then
+            git commit -m "Clean up processed pending comments"
+            git push
+          fi
